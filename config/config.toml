@@ -1,0 +1,39 @@
+# Provider type (openai, openrouter, or vertexai)
+provider = "openrouter"
+
+# Optional: Anthropic API key for client validation
+# If set, clients must provide this exact API key
+anthropic_api_key = "sk-ant-proxy-test-key"
+
+[openrouter]
+# OpenRouter API Key (required)
+api_key = ""
+
+# Optional: Base URL (default: https://openrouter.ai/api/v1)
+# base_url = "https://openrouter.ai/api/v1"
+
+# Optional: OpenRouter specific settings
+# Site URL for OpenRouter credits
+# site_url = "https://your-site.com"
+# Application name
+# app_name = "claude-code-proxy"
+
+[models]
+# Model Configuration (use OpenRouter model names)
+# Examples:
+# - anthropic/claude-3.5-sonnet
+# - openai/gpt-4o
+# - meta-llama/llama-3.1-70b-instruct
+big_model = "anthropic/claude-3.5-sonnet"
+middle_model = "anthropic/claude-3.5-sonnet"
+small_model = "anthropic/claude-3.5-haiku"
+
+[server]
+host = "0.0.0.0"
+port = 8082
+log_level = "info"
+
+[request]
+max_tokens_limit = 4096
+min_tokens_limit = 100
+request_timeout = 90
