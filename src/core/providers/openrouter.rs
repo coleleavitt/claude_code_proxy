@@ -94,7 +94,7 @@ impl OpenRouterProvider {
 
         // Log outgoing request to OpenRouter
         tracing::info!(
-            "📤 Sending request to OpenRouter: model={}, messages={}, max_tokens={:?}, clamped_max_tokens={}",
+            "Sending request to OpenRouter: model={}, messages={}, max_tokens={:?}, clamped_max_tokens={}",
             request.model,
             request.messages.len(),
             request.max_tokens,
@@ -122,7 +122,7 @@ impl OpenRouterProvider {
                 .sum();
 
             tracing::info!(
-                "🔍 Message debug: total_raw_content_chars={}, avg_chars_per_msg={}",
+                "Message debug: total_raw_content_chars={}, avg_chars_per_msg={}",
                 total_content_len,
                 total_content_len / request.messages.len()
             );
@@ -180,7 +180,7 @@ impl OpenRouterProvider {
 
         // Log token usage information
         tracing::info!(
-            "📥 OpenRouter response: model={}, sent_tokens={}, received_tokens={}, total_tokens={}",
+            "OpenRouter response: model={}, sent_tokens={}, received_tokens={}, total_tokens={}",
             completion.model,
             completion.usage.prompt_tokens,
             completion.usage.completion_tokens,
@@ -199,7 +199,7 @@ impl OpenRouterProvider {
 
         // Log outgoing streaming request to OpenRouter
         tracing::info!(
-            "📤 Sending STREAM request to OpenRouter: model={}, messages={}, max_tokens={:?}, clamped_max_tokens={}",
+            "Sending STREAM request to OpenRouter: model={}, messages={}, max_tokens={:?}, clamped_max_tokens={}",
             request.model,
             request.messages.len(),
             request.max_tokens,

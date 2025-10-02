@@ -108,8 +108,8 @@ async fn main() {
 
 /// Print startup banner with configuration
 fn print_startup_banner(config: &Config) {
-    println!("🚀 Claude API Proxy v1.0.0");
-    println!("✅ Configuration loaded successfully");
+    println!("Claude API Proxy v1.0.0");
+    println!("Configuration loaded successfully");
     println!("   Provider: {:?}", config.provider);
     if !config.openai_base_url.is_empty() {
         println!("   Base URL: {}", config.openai_base_url);

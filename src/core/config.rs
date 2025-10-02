@@ -80,6 +80,12 @@ pub struct RequestConfig {
     pub request_timeout: u64,
     #[serde(default = "default_max_retries")]
     pub max_retries: u32,
+    /// Maximum context tokens before compression
+    #[serde(default = "default_max_context_tokens")]
+    pub max_context_tokens: u32,
+    /// Target tokens after compression
+    #[serde(default = "default_target_context_tokens")]
+    pub target_context_tokens: u32,
 }
 
 fn default_host() -> String {
@@ -114,6 +120,20 @@ fn default_request_timeout() -> u64 {
 
 fn default_max_retries() -> u32 {
     DEFAULT_MAX_RETRIES
+}
+
+/// Default maximum context tokens before compression (128K tokens)
+const DEFAULT_MAX_CONTEXT_TOKENS: u32 = 128000;
+
+/// Default target context tokens after compression (64K tokens)
+const DEFAULT_TARGET_CONTEXT_TOKENS: u32 = 64000;
+
+fn default_max_context_tokens() -> u32 {
+    DEFAULT_MAX_CONTEXT_TOKENS
+}
+
+fn default_target_context_tokens() -> u32 {
+    DEFAULT_TARGET_CONTEXT_TOKENS
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -187,6 +207,12 @@ pub struct Config {
 
     /// Maximum number of retries
     pub max_retries: u32,
+
+    /// Maximum context tokens before compression
+    pub max_context_tokens: u32,
+
+    /// Target context tokens after compression
+    pub target_context_tokens: u32,
 
     /// Model for opus requests
     pub big_model: String,
@@ -289,6 +315,8 @@ impl Config {
             max_messages_limit: config.request.max_messages_limit,
             request_timeout: config.request.request_timeout,
             max_retries: config.request.max_retries,
+            max_context_tokens: config.request.max_context_tokens,
+            target_context_tokens: config.request.target_context_tokens,
             big_model: config.models.big_model,
             middle_model: config.models.middle_model,
             small_model: config.models.small_model,
@@ -366,6 +394,8 @@ mod tests {
             max_messages_limit = 30
             request_timeout = 90
             max_retries = 2
+            max_context_tokens = 120000
+            target_context_tokens = 80000
         "#
         )
         .unwrap();

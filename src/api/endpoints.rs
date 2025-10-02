@@ -10,7 +10,7 @@ use crate::conversion::response_converter::{
 use crate::core::config::Config;
 use crate::core::model_manager::ModelManager;
 use crate::core::provider::Provider;
-use crate::models::claude::{ClaudeMessagesRequest, ClaudeTokenCountRequest, MessageContent};
+use crate::models::claude::{ClaudeMessage, ClaudeMessagesRequest, ClaudeTokenCountRequest, MessageContent};
 use axum::{
     Json, Router,
     extract::State,
@@ -86,7 +86,7 @@ async fn create_message(
 
     // Log incoming request details
     tracing::info!(
-        "📥 Incoming Claude API request: model={}, stream={}, messages={}",
+        "Incoming Claude API request: model={}, stream={}, messages={}",
         model_name,
         stream,
         request.messages.len()
@@ -114,7 +114,7 @@ async fn create_message(
             .collect();
 
         tracing::warn!(
-            "📜 Context truncated: {} messages → {} messages (removed {} oldest messages)",
+            "Context truncated by message count: {} messages → {} messages (removed {} oldest messages)",
             original_count,
             truncated_messages.len(),
             original_count - truncated_messages.len()
@@ -123,6 +123,10 @@ async fn create_message(
     } else {
         request.messages.clone()
     };
+
+    // TODO: Implement token-based truncation
+    // For now, we only use message count truncation above
+    let messages = messages;
 
     // Create a processed request for conversion
     // Move the request here to avoid multiple borrows
