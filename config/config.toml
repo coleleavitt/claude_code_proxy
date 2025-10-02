@@ -7,7 +7,7 @@ anthropic_api_key = "sk-ant-proxy-test-key"
 
 [openrouter]
 # OpenRouter API Key (required)
-api_key = ""
+api_key = "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"
 
 # Optional: Base URL (default: https://openrouter.ai/api/v1)
 # base_url = "https://openrouter.ai/api/v1"

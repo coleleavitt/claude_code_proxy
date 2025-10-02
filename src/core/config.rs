@@ -58,7 +58,7 @@ pub struct ModelConfig {
     pub small_model: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct ServerConfig {
     #[serde(default = "default_host")]
     pub host: String,
@@ -68,7 +68,7 @@ pub struct ServerConfig {
     pub log_level: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct RequestConfig {
     #[serde(default = "default_max_tokens")]
     pub max_tokens_limit: u32,
@@ -206,13 +206,17 @@ impl Config {
         let provider = ProviderType::from_str(&config.provider)
             .context("Invalid provider value. Must be one of: openai, openrouter, vertexai")?;
 
-        let (openai_api_key, openai_base_url) = match provider {
+        let (openai_api_key, openai_base_url, azure_api_version, openrouter_site_url, openrouter_app_name) = match provider {
             ProviderType::OpenAI => {
                 let openai_config = config.openai
                     .context("OpenAI configuration missing for OpenAI provider")?;
+                let azure_ver = openai_config.azure_api_version.clone();
                 (
                     openai_config.api_key,
                     openai_config.base_url.unwrap_or_else(|| "https://api.openai.com/v1".to_string()),
+                    azure_ver,
+                    None,
+                    None,
                 )
             }
             ProviderType::OpenRouter => {
@@ -221,10 +225,13 @@ impl Config {
                 (
                     openrouter_config.api_key,
                     openrouter_config.base_url.unwrap_or_else(|| "https://openrouter.ai/api/v1".to_string()),
+                    None,
+                    openrouter_config.site_url,
+                    openrouter_config.app_name,
                 )
             }
             ProviderType::VertexAI => {
-                (String::new(), String::new()) // Not used for Vertex AI
+                (String::new(), String::new(), None, None, None) // Not used for Vertex AI
             }
         };
 
@@ -240,23 +247,14 @@ impl Config {
             (None, None, None)
         };
 
-        let openrouter_config = if let Some(config) = config.openrouter {
-            (config.site_url, config.app_name)
-        } else {
-            (None, None)
-        };
-
-        let azure_api_version = config.openai
-            .and_then(|c| c.azure_api_version);
-
         Ok(Config {
             provider,
             openai_api_key,
             anthropic_api_key: config.anthropic_api_key,
             openai_base_url,
             azure_api_version,
-            openrouter_site_url: openrouter_config.0,
-            openrouter_app_name: openrouter_config.1,
+            openrouter_site_url,
+            openrouter_app_name,
             vertexai_project_id: vertexai_config.0,
             vertexai_location: vertexai_config.1,
             vertexai_access_token: vertexai_config.2,
@@ -271,6 +269,15 @@ impl Config {
             middle_model: config.models.middle_model,
             small_model: config.models.small_model,
         })
+    }
+
+    /// Load configuration from environment and config file
+    ///
+    /// Looks for config.toml in current directory by default
+    pub fn from_env() -> Result<Self> {
+        let config_path = std::env::var("CONFIG_PATH")
+            .unwrap_or_else(|_| "config.toml".to_string());
+        Self::from_file(config_path)
     }
 
     /// Validate API key format based on provider
