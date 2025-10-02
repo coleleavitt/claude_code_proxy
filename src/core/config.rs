@@ -74,6 +74,8 @@ pub struct RequestConfig {
     pub max_tokens_limit: u32,
     #[serde(default = "default_min_tokens")]
     pub min_tokens_limit: u32,
+    #[serde(default = "default_max_messages")]
+    pub max_messages_limit: u32,
     #[serde(default = "default_request_timeout")]
     pub request_timeout: u64,
     #[serde(default = "default_max_retries")]
@@ -98,6 +100,12 @@ fn default_max_tokens() -> u32 {
 
 fn default_min_tokens() -> u32 {
     DEFAULT_MIN_TOKENS
+}
+
+const DEFAULT_MAX_MESSAGES: u32 = 30;
+
+fn default_max_messages() -> u32 {
+    DEFAULT_MAX_MESSAGES
 }
 
 fn default_request_timeout() -> u64 {
@@ -167,6 +175,9 @@ pub struct Config {
 
     /// Maximum tokens limit
     pub max_tokens_limit: u32,
+
+    /// Message limit for context truncation
+    pub max_messages_limit: u32,
 
     /// Minimum tokens limit
     pub min_tokens_limit: u32,
@@ -275,6 +286,7 @@ impl Config {
             log_level: config.server.log_level,
             max_tokens_limit: config.request.max_tokens_limit,
             min_tokens_limit: config.request.min_tokens_limit,
+            max_messages_limit: config.request.max_messages_limit,
             request_timeout: config.request.request_timeout,
             max_retries: config.request.max_retries,
             big_model: config.models.big_model,
@@ -351,6 +363,7 @@ mod tests {
             [request]
             max_tokens_limit = 4096
             min_tokens_limit = 100
+            max_messages_limit = 30
             request_timeout = 90
             max_retries = 2
         "#

@@ -9,7 +9,7 @@ use futures::Stream;
 use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::pin::Pin;
-use tracing::{debug, error, warn};
+use tracing::{error, warn};
 
 /// Convert OpenAI response to Claude format
 ///

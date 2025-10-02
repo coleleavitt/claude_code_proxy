@@ -80,11 +80,15 @@ async fn create_message(
     // Validate API key
     validate_api_key(&headers, &state.config)?;
 
+    // Capture request details before move
+    let model_name = request.model.clone();
+    let stream = request.stream;
+
     // Log incoming request details
     tracing::info!(
         "📥 Incoming Claude API request: model={}, stream={}, messages={}",
-        request.model,
-        request.stream,
+        model_name,
+        stream,
         request.messages.len()
     );
 
@@ -93,21 +97,49 @@ async fn create_message(
 
     debug!(
         "Processing Claude request: model={}, stream={}",
-        request.model, request.stream
+        model_name, stream
     );
 
     // Generate unique request ID for cancellation tracking
     let request_id = uuid::Uuid::new_v4().to_string();
 
+    // Apply context truncation if needed
+    let messages = if request.messages.len() > state.config.max_messages_limit as usize {
+        let original_count = request.messages.len();
+        let truncated_messages: Vec<crate::models::claude::ClaudeMessage> = request
+            .messages
+            .iter()
+            .skip(original_count - state.config.max_messages_limit as usize)
+            .cloned()
+            .collect();
+
+        tracing::warn!(
+            "📜 Context truncated: {} messages → {} messages (removed {} oldest messages)",
+            original_count,
+            truncated_messages.len(),
+            original_count - truncated_messages.len()
+        );
+        truncated_messages
+    } else {
+        request.messages.clone()
+    };
+
+    // Create a processed request for conversion
+    // Move the request here to avoid multiple borrows
+    let mut processed_request = request;
+    processed_request.messages = messages;
+    processed_request.model = model_name.clone();
+    processed_request.stream = stream;
+
     // Convert Claude request to OpenAI format
     let openai_request = convert_claude_to_openai(
-        &request,
+        &processed_request,
         &state.model_manager,
         state.config.min_tokens_limit,
         state.config.max_tokens_limit,
     );
 
-    if request.stream {
+    if stream {
         // Streaming response with client disconnection detection
         match state
             .provider
@@ -127,7 +159,7 @@ async fn create_message(
 
                 // Convert provider stream to Claude SSE format with cancellation support
                 let provider = state.provider.clone();
-                let model_name = request.model.clone();
+                let model_name = model_name.clone();
 
                 let claude_stream = convert_openai_streaming_to_claude_with_cancellation(
                     provider_stream.map(|r| r.map_err(|e| StreamError(e.to_string()))),
@@ -180,7 +212,7 @@ async fn create_message(
             .await
         {
             Ok(provider_response) => {
-                let claude_response = convert_openai_to_claude(&provider_response, &request.model);
+                let claude_response = convert_openai_to_claude(&provider_response, &model_name);
                 Ok(Json(claude_response).into_response())
             }
             Err(e) => {
