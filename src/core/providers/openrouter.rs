@@ -5,8 +5,8 @@ use crate::models::openai::{
     OpenAIChatCompletionRequest, OpenAIChatCompletionResponse, OpenAIStreamOptions,
 };
 use async_trait::async_trait;
-use futures::stream::Stream;
 use futures::StreamExt;
+use futures::stream::Stream;
 use reqwest::Client;
 use std::collections::HashMap;
 use std::pin::Pin;
@@ -94,11 +94,39 @@ impl OpenRouterProvider {
 
         // Log outgoing request to OpenRouter
         tracing::info!(
-            "📤 Sending request to OpenRouter: model={}, messages={}, max_tokens={:?}",
+            "📤 Sending request to OpenRouter: model={}, messages={}, max_tokens={:?}, clamped_max_tokens={}",
             request.model,
             request.messages.len(),
-            request.max_tokens
+            request.max_tokens,
+            request.max_tokens.unwrap_or(0)
         );
+
+        // Debug log to show message content for token count investigation
+        if request.messages.len() > 10 {
+            let total_content_len: usize = request.messages
+                .iter()
+                .map(|msg| {
+                    if let Some(content) = &msg.content {
+                        match content {
+                            serde_json::Value::String(s) => s.len(),
+                            serde_json::Value::Array(arr) => arr.iter()
+                                .filter_map(|v| v.get("text").and_then(|t| t.as_str()))
+                                .map(|s| s.len())
+                                .sum::<usize>(),
+                            _ => 0,
+                        }
+                    } else {
+                        0
+                    }
+                })
+                .sum();
+
+            tracing::info!(
+                "🔍 Message debug: total_raw_content_chars={}, avg_chars_per_msg={}",
+                total_content_len,
+                total_content_len / request.messages.len()
+            );
+        }
 
         let mut req_builder = self
             .client
@@ -150,6 +178,15 @@ impl OpenRouterProvider {
             .await
             .map_err(|e| ProviderError::Unexpected(format!("Failed to parse response: {}", e)))?;
 
+        // Log token usage information
+        tracing::info!(
+            "📥 OpenRouter response: model={}, sent_tokens={}, received_tokens={}, total_tokens={}",
+            completion.model,
+            completion.usage.prompt_tokens,
+            completion.usage.completion_tokens,
+            completion.usage.total_tokens
+        );
+
         Ok(completion)
     }
 
@@ -162,10 +199,11 @@ impl OpenRouterProvider {
 
         // Log outgoing streaming request to OpenRouter
         tracing::info!(
-            "📤 Sending STREAM request to OpenRouter: model={}, messages={}, max_tokens={:?}",
+            "📤 Sending STREAM request to OpenRouter: model={}, messages={}, max_tokens={:?}, clamped_max_tokens={}",
             request.model,
             request.messages.len(),
-            request.max_tokens
+            request.max_tokens,
+            request.max_tokens.unwrap_or(0)
         );
 
         let mut req_builder = self

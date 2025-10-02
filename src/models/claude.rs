@@ -86,9 +86,7 @@ mod tool_result_content {
                     .collect();
                 Ok(ToolResultContent::Array(objects))
             }
-            serde_json::Value::Object(o) => {
-                Ok(ToolResultContent::Object(o.into_iter().collect()))
-            }
+            serde_json::Value::Object(o) => Ok(ToolResultContent::Object(o.into_iter().collect())),
             _ => Err(serde::de::Error::custom("Invalid tool result content")),
         }
     }

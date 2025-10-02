@@ -60,8 +60,8 @@ impl ModelManager {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::provider::ProviderType;
     use super::*;
+    use crate::core::provider::ProviderType;
 
     fn create_test_config() -> Config {
         Config {

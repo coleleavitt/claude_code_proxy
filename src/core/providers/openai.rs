@@ -5,8 +5,8 @@ use crate::models::openai::{
     OpenAIChatCompletionRequest, OpenAIChatCompletionResponse, OpenAIStreamOptions,
 };
 use async_trait::async_trait;
-use futures::stream::Stream;
 use futures::StreamExt;
+use futures::stream::Stream;
 use reqwest::Client;
 use std::collections::HashMap;
 use std::pin::Pin;

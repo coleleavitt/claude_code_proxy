@@ -4,17 +4,19 @@
 //! including message creation, token counting, and health checks.
 
 use crate::conversion::request_converter::convert_claude_to_openai;
-use crate::conversion::response_converter::{convert_openai_to_claude, convert_openai_streaming_to_claude_with_cancellation};
+use crate::conversion::response_converter::{
+    convert_openai_streaming_to_claude_with_cancellation, convert_openai_to_claude,
+};
 use crate::core::config::Config;
 use crate::core::model_manager::ModelManager;
 use crate::core::provider::Provider;
 use crate::models::claude::{ClaudeMessagesRequest, ClaudeTokenCountRequest, MessageContent};
 use axum::{
+    Json, Router,
     extract::State,
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response, Sse},
     routing::{get, post},
-    Json, Router,
 };
 use futures::StreamExt;
 use serde_json::json;
@@ -132,16 +134,18 @@ async fn create_message(
                     model_name,
                     provider,
                     request_id,
-                ).await;
+                )
+                .await;
 
                 // Convert Result<String, String> to SSE events
-                let sse_stream = claude_stream.map(|item| {
-                    match item {
-                        Ok(data) => Ok::<_, Infallible>(axum::response::sse::Event::default().data(data)),
-                        Err(e) => {
-                            error!("Stream error: {}", e);
-                            Ok(axum::response::sse::Event::default().data(format!("event: error\ndata: {}\n\n", e)))
-                        }
+                let sse_stream = claude_stream.map(|item| match item {
+                    Ok(data) => {
+                        Ok::<_, Infallible>(axum::response::sse::Event::default().data(data))
+                    }
+                    Err(e) => {
+                        error!("Stream error: {}", e);
+                        Ok(axum::response::sse::Event::default()
+                            .data(format!("event: error\ndata: {}\n\n", e)))
                     }
                 });
 
@@ -154,9 +158,6 @@ async fn create_message(
                 let response_headers = response.headers_mut();
                 response_headers.insert("Cache-Control", "no-cache".parse().unwrap());
                 response_headers.insert("Connection", "keep-alive".parse().unwrap());
-                response_headers.insert("Access-Control-Allow-Origin", "*".parse().unwrap());
-                response_headers.insert("Access-Control-Allow-Headers", "*".parse().unwrap());
-
                 Ok(response)
             }
             Err(e) => {
@@ -179,8 +180,7 @@ async fn create_message(
             .await
         {
             Ok(provider_response) => {
-                let claude_response =
-                    convert_openai_to_claude(&provider_response, &request.model);
+                let claude_response = convert_openai_to_claude(&provider_response, &request.model);
                 Ok(Json(claude_response).into_response())
             }
             Err(e) => {
@@ -308,17 +308,19 @@ async fn test_connection(State(state): State<AppState>) -> impl IntoResponse {
         tool_choice: None,
     };
 
-    match state.provider.create_chat_completion(&test_request, None).await {
-        Ok(response) => {
-            Json(json!({
-                "status": "success",
-                "message": format!("Successfully connected to {} API", state.provider.provider_name()),
-                "provider": state.provider.provider_name(),
-                "model_used": state.config.small_model,
-                "timestamp": chrono::Utc::now().to_rfc3339(),
-                "response_id": response.id,
-            }))
-        }
+    match state
+        .provider
+        .create_chat_completion(&test_request, None)
+        .await
+    {
+        Ok(response) => Json(json!({
+            "status": "success",
+            "message": format!("Successfully connected to {} API", state.provider.provider_name()),
+            "provider": state.provider.provider_name(),
+            "model_used": state.config.small_model,
+            "timestamp": chrono::Utc::now().to_rfc3339(),
+            "response_id": response.id,
+        })),
         Err(e) => {
             error!("API connectivity test failed: {}", e);
             Json(json!({

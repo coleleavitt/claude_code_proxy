@@ -5,9 +5,9 @@
 //! a cancellation token system.
 
 use crate::models::openai::{
-    OpenAIChatCompletionRequest, OpenAIChatCompletionResponse, OpenAIStreamingChunk,
+    OpenAIChatCompletionRequest, OpenAIChatCompletionResponse,
 };
-use anyhow::{Context, Result};
+use anyhow::Result;
 use futures::stream::Stream;
 use reqwest::Client;
 use std::collections::HashMap;
@@ -15,7 +15,6 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{Mutex, Notify};
-use tracing::{error, warn};
 
 /// Error types that can occur during OpenAI API interactions
 #[derive(Debug, thiserror::Error)]
@@ -94,7 +93,10 @@ impl OpenAIClient {
     ) -> Result<OpenAIChatCompletionResponse, OpenAIError> {
         let cancel_notify = if let Some(ref id) = request_id {
             let notify = Arc::new(Notify::new());
-            self.active_requests.lock().await.insert(id.clone(), notify.clone());
+            self.active_requests
+                .lock()
+                .await
+                .insert(id.clone(), notify.clone());
             Some(notify)
         } else {
             None
@@ -127,7 +129,10 @@ impl OpenAIClient {
     ) -> Result<Pin<Box<dyn Stream<Item = Result<String, OpenAIError>> + Send>>, OpenAIError> {
         let cancel_notify = if let Some(ref id) = request_id {
             let notify = Arc::new(Notify::new());
-            self.active_requests.lock().await.insert(id.clone(), notify.clone());
+            self.active_requests
+                .lock()
+                .await
+                .insert(id.clone(), notify.clone());
             Some(notify)
         } else {
             None
@@ -145,12 +150,13 @@ impl OpenAIClient {
 
         // Convert bytes stream to SSE lines
         use futures::StreamExt;
-        use tokio_stream::wrappers::LinesStream;
-        use tokio::io::{AsyncBufReadExt, BufReader};
         use futures_util::TryStreamExt;
+        use tokio::io::{AsyncBufReadExt, BufReader};
+        use tokio_stream::wrappers::LinesStream;
 
         let byte_stream = response.bytes_stream();
-        let byte_stream = byte_stream.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e));
+        let byte_stream =
+            byte_stream.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e));
 
         // Convert to AsyncRead
         let reader = tokio_util::io::StreamReader::new(byte_stream);

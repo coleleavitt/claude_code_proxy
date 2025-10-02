@@ -3,11 +3,11 @@
 //! This module handles loading and validating configuration from TOML files.
 //! Following JPL Rule 24: All configuration is validated at startup.
 
-use std::fs;
-use std::path::Path;
+use crate::core::provider::ProviderType;
 use anyhow::{Context, Result};
 use serde::Deserialize;
-use crate::core::provider::ProviderType;
+use std::fs;
+use std::path::Path;
 
 /// Maximum token limit default
 const DEFAULT_MAX_TOKENS: u32 = 4096;
@@ -197,34 +197,45 @@ impl Config {
     /// - Required configuration values are missing
     /// - Configuration values are invalid
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let content = fs::read_to_string(path)
-            .context("Failed to read configuration file")?;
+        let content = fs::read_to_string(path).context("Failed to read configuration file")?;
 
-        let config: TomlConfig = toml::from_str(&content)
-            .context("Failed to parse TOML configuration")?;
+        let config: TomlConfig =
+            toml::from_str(&content).context("Failed to parse TOML configuration")?;
 
         let provider = ProviderType::from_str(&config.provider)
             .context("Invalid provider value. Must be one of: openai, openrouter, vertexai")?;
 
-        let (openai_api_key, openai_base_url, azure_api_version, openrouter_site_url, openrouter_app_name) = match provider {
+        let (
+            openai_api_key,
+            openai_base_url,
+            azure_api_version,
+            openrouter_site_url,
+            openrouter_app_name,
+        ) = match provider {
             ProviderType::OpenAI => {
-                let openai_config = config.openai
+                let openai_config = config
+                    .openai
                     .context("OpenAI configuration missing for OpenAI provider")?;
                 let azure_ver = openai_config.azure_api_version.clone();
                 (
                     openai_config.api_key,
-                    openai_config.base_url.unwrap_or_else(|| "https://api.openai.com/v1".to_string()),
+                    openai_config
+                        .base_url
+                        .unwrap_or_else(|| "https://api.openai.com/v1".to_string()),
                     azure_ver,
                     None,
                     None,
                 )
             }
             ProviderType::OpenRouter => {
-                let openrouter_config = config.openrouter
+                let openrouter_config = config
+                    .openrouter
                     .context("OpenRouter configuration missing for OpenRouter provider")?;
                 (
                     openrouter_config.api_key,
-                    openrouter_config.base_url.unwrap_or_else(|| "https://openrouter.ai/api/v1".to_string()),
+                    openrouter_config
+                        .base_url
+                        .unwrap_or_else(|| "https://openrouter.ai/api/v1".to_string()),
                     None,
                     openrouter_config.site_url,
                     openrouter_config.app_name,
@@ -236,7 +247,8 @@ impl Config {
         };
 
         let vertexai_config = if provider == ProviderType::VertexAI {
-            let config = config.vertexai
+            let config = config
+                .vertexai
                 .context("Vertex AI configuration missing for Vertex AI provider")?;
             (
                 Some(config.project_id),
@@ -275,8 +287,8 @@ impl Config {
     ///
     /// Looks for config.toml in current directory by default
     pub fn from_env() -> Result<Self> {
-        let config_path = std::env::var("CONFIG_PATH")
-            .unwrap_or_else(|_| "config.toml".to_string());
+        let config_path =
+            std::env::var("CONFIG_PATH").unwrap_or_else(|_| "config.toml".to_string());
         Self::from_file(config_path)
     }
 
@@ -311,12 +323,14 @@ impl Config {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::NamedTempFile;
     use std::io::Write;
+    use tempfile::NamedTempFile;
 
     fn create_test_config() -> NamedTempFile {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"
+        write!(
+            file,
+            r#"
             provider = "openai"
             anthropic_api_key = "test-key"
 
@@ -339,7 +353,9 @@ mod tests {
             min_tokens_limit = 100
             request_timeout = 90
             max_retries = 2
-        "#).unwrap();
+        "#
+        )
+        .unwrap();
         file.flush().unwrap();
         file
     }

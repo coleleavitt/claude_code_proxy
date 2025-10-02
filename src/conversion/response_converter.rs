@@ -3,10 +3,10 @@
 //! This module converts OpenAI API responses back to Claude API format,
 //! supporting both streaming and non-streaming responses.
 
-use crate::core::constants::{content, event, role, stop, delta as delta_const};
+use crate::core::constants::{content, delta as delta_const, event, role, stop};
 use crate::models::openai::{OpenAIChatCompletionResponse, OpenAIStreamingChunk};
 use futures::Stream;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::pin::Pin;
 use tracing::{debug, error, warn};
@@ -45,8 +45,8 @@ pub fn convert_openai_to_claude(
     // Add tool calls if present
     if let Some(ref tool_calls) = message.tool_calls {
         for tool_call in tool_calls {
-            let input: Value = serde_json::from_str(&tool_call.function.arguments)
-                .unwrap_or_else(|_| json!({}));
+            let input: Value =
+                serde_json::from_str(&tool_call.function.arguments).unwrap_or_else(|_| json!({}));
 
             content_blocks.push(json!({
                 "type": "tool_use",
@@ -219,7 +219,10 @@ where
 {
     use futures::StreamExt;
 
-    let message_id = format!("msg_{}", uuid::Uuid::new_v4().simple().to_string()[..24].to_string());
+    let message_id = format!(
+        "msg_{}",
+        uuid::Uuid::new_v4().simple().to_string()[..24].to_string()
+    );
 
     let stream = async_stream::stream! {
         // Send initial SSE events
@@ -495,9 +498,12 @@ where
     E: std::error::Error + Send + 'static,
 {
     use futures::StreamExt;
-    use tokio::time::{interval, Duration};
+    use tokio::time::{Duration, interval};
 
-    let message_id = format!("msg_{}", uuid::Uuid::new_v4().simple().to_string()[..24].to_string());
+    let message_id = format!(
+        "msg_{}",
+        uuid::Uuid::new_v4().simple().to_string()[..24].to_string()
+    );
 
     let stream = async_stream::stream! {
         // Send initial SSE events
@@ -550,7 +556,7 @@ where
         // Process stream
         tokio::pin!(openai_stream);
 
-        let mut cancelled = false;
+        let cancelled = false;
 
         loop {
             tokio::select! {

@@ -139,11 +139,17 @@ pub fn convert_claude_to_openai(
                 "tool" => {
                     if let Some(name) = tool_choice.get("name").and_then(|v| v.as_str()) {
                         let mut choice_obj = HashMap::new();
-                        choice_obj.insert("type".to_string(), Value::String(tool::FUNCTION.to_string()));
+                        choice_obj.insert(
+                            "type".to_string(),
+                            Value::String(tool::FUNCTION.to_string()),
+                        );
 
                         let mut function_obj = HashMap::new();
                         function_obj.insert("name".to_string(), Value::String(name.to_string()));
-                        choice_obj.insert(tool::FUNCTION.to_string(), Value::Object(function_obj.into_iter().collect()));
+                        choice_obj.insert(
+                            tool::FUNCTION.to_string(),
+                            Value::Object(function_obj.into_iter().collect()),
+                        );
 
                         Some(Value::Object(choice_obj.into_iter().collect()))
                     } else {
@@ -177,14 +183,18 @@ fn convert_claude_user_message(msg: &ClaudeMessage) -> OpenAIMessage {
                     ClaudeContentBlock::Text(text_block) => {
                         let mut content_obj = HashMap::new();
                         content_obj.insert("type".to_string(), Value::String("text".to_string()));
-                        content_obj.insert("text".to_string(), Value::String(text_block.text.clone()));
+                        content_obj
+                            .insert("text".to_string(), Value::String(text_block.text.clone()));
                         openai_content.push(Value::Object(content_obj.into_iter().collect()));
                     }
                     ClaudeContentBlock::Image(image_block) => {
                         // Convert Claude image format to OpenAI format
                         if let (Some(source_type), Some(media_type), Some(data)) = (
                             image_block.source.get("type").and_then(|v| v.as_str()),
-                            image_block.source.get("media_type").and_then(|v| v.as_str()),
+                            image_block
+                                .source
+                                .get("media_type")
+                                .and_then(|v| v.as_str()),
                             image_block.source.get("data").and_then(|v| v.as_str()),
                         ) {
                             if source_type == "base64" {
@@ -195,9 +205,16 @@ fn convert_claude_user_message(msg: &ClaudeMessage) -> OpenAIMessage {
                                 );
 
                                 let mut content_obj = HashMap::new();
-                                content_obj.insert("type".to_string(), Value::String("image_url".to_string()));
-                                content_obj.insert("image_url".to_string(), Value::Object(image_url_obj.into_iter().collect()));
-                                openai_content.push(Value::Object(content_obj.into_iter().collect()));
+                                content_obj.insert(
+                                    "type".to_string(),
+                                    Value::String("image_url".to_string()),
+                                );
+                                content_obj.insert(
+                                    "image_url".to_string(),
+                                    Value::Object(image_url_obj.into_iter().collect()),
+                                );
+                                openai_content
+                                    .push(Value::Object(content_obj.into_iter().collect()));
                             }
                         }
                     }
@@ -310,7 +327,9 @@ fn convert_claude_tool_results(msg: &ClaudeMessage) -> Vec<OpenAIMessage> {
 /// Check if message has tool results
 fn has_tool_results(msg: &ClaudeMessage) -> bool {
     if let MessageContent::Blocks(blocks) = &msg.content {
-        blocks.iter().any(|block| matches!(block, ClaudeContentBlock::ToolResult(_)))
+        blocks
+            .iter()
+            .any(|block| matches!(block, ClaudeContentBlock::ToolResult(_)))
     } else {
         false
     }
@@ -326,7 +345,10 @@ fn parse_tool_result_content(content: &ToolResultContent) -> String {
                 .filter_map(|item| {
                     if let Some(text_type) = item.get("type").and_then(|v| v.as_str()) {
                         if text_type == content::TEXT {
-                            return item.get("text").and_then(|v| v.as_str()).map(|s| s.to_string());
+                            return item
+                                .get("text")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string());
                         }
                     }
                     if let Some(text) = item.get("text").and_then(|v| v.as_str()) {

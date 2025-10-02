@@ -3,7 +3,7 @@
 //! This module sets up the tracing subscriber for structured logging
 //! throughout the application.
 
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 /// Initialize the logging system with the specified level
 ///
@@ -35,8 +35,8 @@ pub fn init_logging(log_level: &str) {
     };
 
     // Create the environment filter
-    let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new(final_level));
+    let env_filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(final_level));
 
     // Initialize the tracing subscriber
     tracing_subscriber::registry()

@@ -8,7 +8,7 @@ mod conversion;
 mod core;
 mod models;
 
-use crate::api::endpoints::{create_router, AppState};
+use crate::api::endpoints::{AppState, create_router};
 use crate::core::config::Config;
 use crate::core::logging::init_logging;
 use crate::core::model_manager::ModelManager;
@@ -42,7 +42,10 @@ async fn main() {
 
     // Validate API key
     if !config.validate_api_key() {
-        error!("Invalid API key configuration for provider: {:?}", config.provider);
+        error!(
+            "Invalid API key configuration for provider: {:?}",
+            config.provider
+        );
         std::process::exit(1);
     }
 

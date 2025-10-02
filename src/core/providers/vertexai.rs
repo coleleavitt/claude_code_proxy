@@ -2,8 +2,8 @@
 
 use crate::core::provider::{Provider, ProviderError};
 use crate::models::openai::{
-    OpenAIChatCompletionRequest, OpenAIChatCompletionResponse, OpenAIMessage, OpenAIStreamOptions,
-    OpenAIChoice, OpenAIUsage,
+    OpenAIChatCompletionRequest, OpenAIChatCompletionResponse, OpenAIChoice, OpenAIMessage
+    , OpenAIUsage,
 };
 use async_trait::async_trait;
 use futures::stream::Stream;
@@ -15,7 +15,6 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{Mutex, Notify};
-use tracing::{debug, error, warn};
 
 /// Vertex AI provider for Google Cloud's Gemini models
 pub struct VertexAIProvider {
@@ -93,12 +92,7 @@ impl VertexAIProvider {
     /// * `location` - Google Cloud location (e.g., "us-central1")
     /// * `access_token` - Google Cloud access token (from gcloud auth or service account)
     /// * `timeout` - Request timeout in seconds
-    pub fn new(
-        project_id: String,
-        location: String,
-        access_token: String,
-        timeout: u64,
-    ) -> Self {
+    pub fn new(project_id: String, location: String, access_token: String, timeout: u64) -> Self {
         let client = Client::builder()
             .timeout(Duration::from_secs(timeout))
             .build()
@@ -206,15 +200,18 @@ impl VertexAIProvider {
             }
         };
 
-        let usage = response.usage_metadata.map(|u| OpenAIUsage {
-            prompt_tokens: u.prompt_token_count,
-            completion_tokens: u.candidates_token_count,
-            total_tokens: u.total_token_count,
-        }).unwrap_or(OpenAIUsage {
-            prompt_tokens: 0,
-            completion_tokens: 0,
-            total_tokens: 0,
-        });
+        let usage = response
+            .usage_metadata
+            .map(|u| OpenAIUsage {
+                prompt_tokens: u.prompt_token_count,
+                completion_tokens: u.candidates_token_count,
+                total_tokens: u.total_token_count,
+            })
+            .unwrap_or(OpenAIUsage {
+                prompt_tokens: 0,
+                completion_tokens: 0,
+                total_tokens: 0,
+            });
 
         OpenAIChatCompletionResponse {
             id: format!("chatcmpl-{}", uuid::Uuid::new_v4()),
@@ -259,7 +256,8 @@ impl VertexAIProvider {
         }
 
         if error_lower.contains("permission") {
-            return "Permission denied. Please check your Google Cloud IAM permissions.".to_string();
+            return "Permission denied. Please check your Google Cloud IAM permissions."
+                .to_string();
         }
 
         error_detail.to_string()
