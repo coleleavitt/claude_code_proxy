@@ -1,0 +1,33 @@
+# OpenAI Provider Configuration Example
+
+# Provider type (openai, openrouter, or vertexai)
+provider = "openai"
+
+[openai]
+# OpenAI API Key (required)
+api_key = "sk-your-openai-api-key-here"
+
+# Optional: Base URL (default: https://api.openai.com/v1)
+# base_url = "https://api.openai.com/v1"
+
+# Optional: Azure OpenAI specific settings
+# azure_api_version = "2023-05-15"
+
+# Optional: Anthropic API key for client validation
+# If set, clients must provide this exact API key
+# anthropic_api_key = "your-anthropic-api-key"
+
+[models]
+big_model = "gpt-4o"
+middle_model = "gpt-4o"
+small_model = "gpt-4o-mini"
+
+[server]
+host = "0.0.0.0"
+port = 8082
+log_level = "info"
+
+[request]
+max_tokens_limit = 4096
+min_tokens_limit = 100
+request_timeout = 90

@@ -1,0 +1,36 @@
+# Vertex AI Provider Configuration Example
+
+# Provider type (openai, openrouter, or vertexai)
+provider = "vertexai"
+
+[vertexai]
+# Vertex AI Configuration (required)
+project_id = "your-gcp-project-id"
+location = "us-central1"
+access_token = "your-gcp-access-token"
+
+# To get an access token, run:
+# gcloud auth print-access-token
+
+# Optional: Anthropic API key for client validation
+# If set, clients must provide this exact API key
+# anthropic_api_key = "your-anthropic-api-key"
+
+[models]
+# Examples:
+# - gemini-1.5-pro
+# - gemini-1.5-flash
+# - gemini-1.0-pro
+big_model = "gemini-1.5-pro"
+middle_model = "gemini-1.5-pro"
+small_model = "gemini-1.5-flash"
+
+[server]
+host = "0.0.0.0"
+port = 8082
+log_level = "info"
+
+[request]
+max_tokens_limit = 4096
+min_tokens_limit = 100
+request_timeout = 90

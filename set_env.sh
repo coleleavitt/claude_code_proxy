@@ -1,0 +1,5 @@
+export ANTHROPIC_AUTH_TOKEN="fuck"
+export ANTHROPIC_BASE_URL="http://localhost:8082"
+
+echo ANTHROPIC_AUTH_TOKEN
+echo ANTHROPIC_BASE_URL
